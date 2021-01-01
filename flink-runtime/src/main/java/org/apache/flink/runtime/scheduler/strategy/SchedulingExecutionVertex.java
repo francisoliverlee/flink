@@ -24,23 +24,25 @@ import org.apache.flink.runtime.executiongraph.ExecutionVertex;
 import org.apache.flink.runtime.jobgraph.IntermediateResultPartitionID;
 import org.apache.flink.runtime.topology.Vertex;
 
-/**
- * Scheduling representation of {@link ExecutionVertex}.
- */
-public interface SchedulingExecutionVertex<V extends SchedulingExecutionVertex<V, R>, R extends SchedulingResultPartition<V, R>>
-	extends Vertex<ExecutionVertexID, IntermediateResultPartitionID, V, R> {
+/** Scheduling representation of {@link ExecutionVertex}. */
+public interface SchedulingExecutionVertex
+        extends Vertex<
+                ExecutionVertexID,
+                IntermediateResultPartitionID,
+                SchedulingExecutionVertex,
+                SchedulingResultPartition> {
 
-	/**
-	 * Gets the state of the execution vertex.
-	 *
-	 * @return state of the execution vertex
-	 */
-	ExecutionState getState();
+    /**
+     * Gets the state of the execution vertex.
+     *
+     * @return state of the execution vertex
+     */
+    ExecutionState getState();
 
-	/**
-	 * Get {@link InputDependencyConstraint}.
-	 *
-	 * @return input dependency constraint
-	 */
-	InputDependencyConstraint getInputDependencyConstraint();
+    /**
+     * Get {@link InputDependencyConstraint}.
+     *
+     * @return input dependency constraint
+     */
+    InputDependencyConstraint getInputDependencyConstraint();
 }

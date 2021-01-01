@@ -19,7 +19,6 @@
 package org.apache.flink.streaming.util;
 
 import org.apache.flink.api.common.ExecutionConfig;
-import org.apache.flink.core.fs.CloseableRegistry;
 import org.apache.flink.runtime.execution.Environment;
 import org.apache.flink.runtime.state.CheckpointStorageWorkerView;
 import org.apache.flink.runtime.util.FatalExitExceptionHandler;
@@ -37,121 +36,105 @@ import org.apache.flink.streaming.runtime.tasks.mailbox.TaskMailbox;
 
 import java.util.function.BiConsumer;
 
-/**
- * A settable testing {@link StreamTask}.
- */
+/** A settable testing {@link StreamTask}. */
 public class MockStreamTask<OUT, OP extends StreamOperator<OUT>> extends StreamTask<OUT, OP> {
 
-	private final String name;
-	private final Object checkpointLock;
-	private final StreamConfig config;
-	private final ExecutionConfig executionConfig;
-	private StreamTaskStateInitializer streamTaskStateInitializer;
-	private final CloseableRegistry closableRegistry;
-	private final StreamStatusMaintainer streamStatusMaintainer;
-	private final CheckpointStorageWorkerView checkpointStorage;
-	private final ProcessingTimeService processingTimeService;
-	private final BiConsumer<String, Throwable> handleAsyncException;
+    private final Object checkpointLock;
+    private final StreamConfig config;
+    private final ExecutionConfig executionConfig;
+    private StreamTaskStateInitializer streamTaskStateInitializer;
+    private final StreamStatusMaintainer streamStatusMaintainer;
+    private final CheckpointStorageWorkerView checkpointStorage;
+    private final ProcessingTimeService processingTimeService;
+    private final BiConsumer<String, Throwable> handleAsyncException;
 
-	public MockStreamTask(
-		Environment environment,
-		String name,
-		Object checkpointLock,
-		StreamConfig config,
-		ExecutionConfig executionConfig,
-		StreamTaskStateInitializer streamTaskStateInitializer,
-		CloseableRegistry closableRegistry,
-		StreamStatusMaintainer streamStatusMaintainer,
-		CheckpointStorageWorkerView checkpointStorage,
-		TimerService timerService,
-		BiConsumer<String, Throwable> handleAsyncException,
-		TaskMailbox taskMailbox,
-		StreamTaskActionExecutor.SynchronizedStreamTaskActionExecutor taskActionExecutor,
-		StreamInputProcessor inputProcessor) {
+    public MockStreamTask(
+            Environment environment,
+            Object checkpointLock,
+            StreamConfig config,
+            ExecutionConfig executionConfig,
+            StreamTaskStateInitializer streamTaskStateInitializer,
+            StreamStatusMaintainer streamStatusMaintainer,
+            CheckpointStorageWorkerView checkpointStorage,
+            TimerService timerService,
+            BiConsumer<String, Throwable> handleAsyncException,
+            TaskMailbox taskMailbox,
+            StreamTaskActionExecutor.SynchronizedStreamTaskActionExecutor taskActionExecutor,
+            StreamInputProcessor inputProcessor)
+            throws Exception {
 
-		super(environment, timerService, FatalExitExceptionHandler.INSTANCE, taskActionExecutor, taskMailbox);
-		this.name = name;
-		this.checkpointLock = checkpointLock;
-		this.config = config;
-		this.executionConfig = executionConfig;
-		this.streamTaskStateInitializer = streamTaskStateInitializer;
-		this.closableRegistry = closableRegistry;
-		this.streamStatusMaintainer = streamStatusMaintainer;
-		this.checkpointStorage = checkpointStorage;
-		this.processingTimeService = timerService;
-		this.handleAsyncException = handleAsyncException;
-		this.inputProcessor = inputProcessor;
-	}
+        super(
+                environment,
+                timerService,
+                FatalExitExceptionHandler.INSTANCE,
+                taskActionExecutor,
+                taskMailbox);
+        this.checkpointLock = checkpointLock;
+        this.config = config;
+        this.executionConfig = executionConfig;
+        this.streamTaskStateInitializer = streamTaskStateInitializer;
+        this.streamStatusMaintainer = streamStatusMaintainer;
+        this.checkpointStorage = checkpointStorage;
+        this.processingTimeService = timerService;
+        this.handleAsyncException = handleAsyncException;
+        this.inputProcessor = inputProcessor;
+    }
 
-	@Override
-	public void init() {
-	}
+    @Override
+    public void init() {}
 
-	@Override
-	protected void cleanup() {
-		mailboxProcessor.allActionsCompleted();
-	}
+    @Override
+    protected void cleanup() {
+        mailboxProcessor.allActionsCompleted();
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    /**
+     * Checkpoint lock in {@link StreamTask} is replaced by {@link StreamTaskActionExecutor}. <code>
+     * getCheckpointLock</code> method was moved from to the {@link
+     * org.apache.flink.streaming.runtime.tasks.SourceStreamTask SourceStreamTask}.
+     */
+    @Deprecated
+    public Object getCheckpointLock() {
+        return checkpointLock;
+    }
 
-	/**
-	 * Checkpoint lock in {@link StreamTask} is replaced by {@link StreamTaskActionExecutor}.
-	 * <code>getCheckpointLock</code> method was moved from to the {@link org.apache.flink.streaming.runtime.tasks.SourceStreamTask SourceStreamTask}.
-	 */
-	@Deprecated
-	public Object getCheckpointLock() {
-		return checkpointLock;
-	}
+    @Override
+    public StreamConfig getConfiguration() {
+        return config;
+    }
 
-	@Override
-	public StreamConfig getConfiguration() {
-		return config;
-	}
+    @Override
+    public ExecutionConfig getExecutionConfig() {
+        return executionConfig;
+    }
 
-	@Override
-	public Environment getEnvironment() {
-		return super.getEnvironment();
-	}
+    @Override
+    public StreamTaskStateInitializer createStreamTaskStateInitializer() {
+        return streamTaskStateInitializer;
+    }
 
-	@Override
-	public ExecutionConfig getExecutionConfig() {
-		return executionConfig;
-	}
+    public void setStreamTaskStateInitializer(
+            StreamTaskStateInitializer streamTaskStateInitializer) {
+        this.streamTaskStateInitializer = streamTaskStateInitializer;
+    }
 
-	@Override
-	public StreamTaskStateInitializer createStreamTaskStateInitializer() {
-		return streamTaskStateInitializer;
-	}
+    @Override
+    public StreamStatusMaintainer getStreamStatusMaintainer() {
+        return streamStatusMaintainer;
+    }
 
-	public void setStreamTaskStateInitializer(StreamTaskStateInitializer streamTaskStateInitializer) {
-		this.streamTaskStateInitializer = streamTaskStateInitializer;
-	}
+    @Override
+    public CheckpointStorageWorkerView getCheckpointStorage() {
+        return checkpointStorage;
+    }
 
-	@Override
-	public CloseableRegistry getCancelables() {
-		return closableRegistry;
-	}
+    @Override
+    public void handleAsyncException(String message, Throwable exception) {
+        handleAsyncException.accept(message, exception);
+    }
 
-	@Override
-	public StreamStatusMaintainer getStreamStatusMaintainer() {
-		return streamStatusMaintainer;
-	}
-
-	@Override
-	public CheckpointStorageWorkerView getCheckpointStorage() {
-		return checkpointStorage;
-	}
-
-	@Override
-	public void handleAsyncException(String message, Throwable exception) {
-		handleAsyncException.accept(message, exception);
-	}
-
-	@Override
-	public ProcessingTimeServiceFactory getProcessingTimeServiceFactory() {
-		return mailboxExecutor -> processingTimeService;
-	}
+    @Override
+    public ProcessingTimeServiceFactory getProcessingTimeServiceFactory() {
+        return mailboxExecutor -> processingTimeService;
+    }
 }

@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.operations.ddl;
 
+import org.apache.flink.table.catalog.FunctionLanguage;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.OperationUtils;
 
@@ -25,46 +26,52 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Operation to describe a CREATE FUNCTION statement for temporary system function.
- */
+/** Operation to describe a CREATE FUNCTION statement for temporary system function. */
 public class CreateTempSystemFunctionOperation implements CreateOperation {
-	private final String functionName;
-	private String functionClass;
-	private boolean ignoreIfExists;
+    private final String functionName;
+    private String functionClass;
+    private boolean ignoreIfExists;
+    private FunctionLanguage functionLanguage;
 
-	public CreateTempSystemFunctionOperation(
-		String functionName,
-		String functionClass,
-		boolean ignoreIfExists) {
-		this.functionName = functionName;
-		this.functionClass = functionClass;
-		this.ignoreIfExists = ignoreIfExists;
-	}
+    public CreateTempSystemFunctionOperation(
+            String functionName,
+            String functionClass,
+            boolean ignoreIfExists,
+            FunctionLanguage functionLanguage) {
+        this.functionName = functionName;
+        this.functionClass = functionClass;
+        this.ignoreIfExists = ignoreIfExists;
+        this.functionLanguage = functionLanguage;
+    }
 
-	public String getFunctionName() {
-		return this.functionName;
-	}
+    public String getFunctionName() {
+        return this.functionName;
+    }
 
-	public String getFunctionClass() {
-		return this.functionClass;
-	}
+    public String getFunctionClass() {
+        return this.functionClass;
+    }
 
-	public boolean isIgnoreIfExists() {
-		return this.ignoreIfExists;
-	}
+    public boolean isIgnoreIfExists() {
+        return this.ignoreIfExists;
+    }
 
-	@Override
-	public String asSummaryString() {
-		Map<String, Object> params = new LinkedHashMap<>();
-		params.put("functionName", functionName);
-		params.put("functionClass", functionClass);
-		params.put("ignoreIfExists", ignoreIfExists);
+    public FunctionLanguage getFunctionLanguage() {
+        return this.functionLanguage;
+    }
 
-		return OperationUtils.formatWithChildren(
-			"CREATE TEMPORARY SYSTEM FUNCTION",
-			params,
-			Collections.emptyList(),
-			Operation::asSummaryString);
-	}
+    @Override
+    public String asSummaryString() {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("functionName", functionName);
+        params.put("functionClass", functionClass);
+        params.put("ignoreIfExists", ignoreIfExists);
+        params.put("functionLanguage", functionLanguage);
+
+        return OperationUtils.formatWithChildren(
+                "CREATE TEMPORARY SYSTEM FUNCTION",
+                params,
+                Collections.emptyList(),
+                Operation::asSummaryString);
+    }
 }
